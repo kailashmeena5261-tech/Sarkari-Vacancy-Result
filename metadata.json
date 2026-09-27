@@ -1,0 +1,6 @@
+{
+  "name": "Sarkari Vacancy Result",
+  "description": "Professional government job alerts, exam results, admit cards, answer keys, admissions and study material portal with Material 3 design.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
