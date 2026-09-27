@@ -1,5 +1,5 @@
 import React from 'react';
-import { Briefcase, Award, FileText, GraduationCap, LayoutGrid, Bookmark } from 'lucide-react';
+import { Briefcase, Search, Award, FileText, LayoutGrid, Bookmark } from 'lucide-react';
 import { SectionType, Language } from '../types';
 
 interface M3BottomNavProps {
@@ -19,9 +19,9 @@ export const M3BottomNav: React.FC<M3BottomNavProps> = ({
 
   const navItems: { id: SectionType; labelEn: string; labelHi: string; icon: React.ElementType; badge?: number }[] = [
     { id: 'jobs', labelEn: 'Jobs', labelHi: 'नौकरियां', icon: Briefcase },
+    { id: 'search', labelEn: 'Search', labelHi: 'खोजें', icon: Search },
     { id: 'results', labelEn: 'Results', labelHi: 'परिणाम', icon: Award },
-    { id: 'admit-cards', labelEn: 'Admit Card', labelHi: 'एडमिट कार्ड', icon: FileText },
-    { id: 'admissions', labelEn: 'Admissions', labelHi: 'प्रवेश', icon: GraduationCap },
+    { id: 'admit-cards', labelEn: 'Admit Card', labelHi: 'प्रवेश पत्र', icon: FileText },
     { id: 'favorites', labelEn: 'Saved', labelHi: 'सेव्ड', icon: Bookmark, badge: favoritesCount },
     { id: 'settings', labelEn: 'Menu', labelHi: 'मेनू', icon: LayoutGrid },
   ];

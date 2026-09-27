@@ -39,6 +39,8 @@ export const M3TopAppBar: React.FC<M3TopAppBarProps> = ({
     switch (currentSection) {
       case 'jobs':
         return isHindi ? 'सरकारी वैकेंसी' : 'Latest Jobs';
+      case 'search':
+        return isHindi ? 'खोज व फिल्टर' : 'Search & Filters';
       case 'results':
         return isHindi ? 'परीक्षा परिणाम' : 'Exam Results';
       case 'admit-cards':

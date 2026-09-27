@@ -1,7 +1,19 @@
 import React from 'react';
-import { Filter, AlertCircle, Sparkles, SlidersHorizontal, RefreshCw } from 'lucide-react';
-import { JobItem, Language, JobCategory, IndianState, QualificationLevel } from '../../types';
+import {
+  Filter,
+  AlertCircle,
+  Sparkles,
+  SlidersHorizontal,
+  RefreshCw,
+  Globe,
+  CheckCircle2,
+  ChevronDown,
+  Layers,
+  ArrowRight
+} from 'lucide-react';
+import { JobItem, Language, JobCategory, IndianState, QualificationLevel, WordPressApiConfig } from '../../types';
 import { JobCard } from '../JobCard';
+import { BannerAd } from '../BannerAd';
 import { JOB_CATEGORIES } from '../../data/mockData';
 
 interface LatestJobsSectionProps {
@@ -19,6 +31,16 @@ interface LatestJobsSectionProps {
   onOpenFilterSheet: () => void;
   onResetFilters: () => void;
   isLoading: boolean;
+  isRefreshing: boolean;
+  onRefresh: () => void;
+  errorMessage?: string | null;
+  onRetry: () => void;
+  currentPage: number;
+  totalPages: number;
+  totalPostsCount: number;
+  onLoadMore: () => void;
+  wpConfig: WordPressApiConfig;
+  isMockFallback?: boolean;
 }
 
 export const LatestJobsSection: React.FC<LatestJobsSectionProps> = ({
@@ -36,6 +58,16 @@ export const LatestJobsSection: React.FC<LatestJobsSectionProps> = ({
   onOpenFilterSheet,
   onResetFilters,
   isLoading,
+  isRefreshing,
+  onRefresh,
+  errorMessage,
+  onRetry,
+  currentPage,
+  totalPages,
+  totalPostsCount,
+  onLoadMore,
+  wpConfig,
+  isMockFallback = false,
 }) => {
   const isHindi = language === 'hi';
 
@@ -43,8 +75,65 @@ export const LatestJobsSection: React.FC<LatestJobsSectionProps> = ({
     selectedCategory !== 'all' || selectedState !== 'all' || selectedQualification !== 'all';
 
   return (
-    <div className="p-3 sm:p-4 space-y-3 pb-24">
-      {/* 1. Quick Category Filter Bar (Functional Buttons) */}
+    <div className="p-3 sm:p-4 space-y-3 pb-24 text-xs">
+      {/* 1. WordPress REST API Live Connection Status Pill */}
+      <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-[11px]">
+        <div className="flex items-center gap-1.5 truncate">
+          <span
+            className={`w-2 h-2 rounded-full shrink-0 ${
+              wpConfig.useCustomUrl && wpConfig.connectionStatus === 'connected'
+                ? 'bg-emerald-500 animate-pulse'
+                : 'bg-blue-600'
+            }`}
+          />
+          <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+            {wpConfig.useCustomUrl
+              ? `Connected: ${wpConfig.baseUrl}`
+              : isHindi
+              ? 'वर्डप्रेस REST API सिंक सक्रिय'
+              : 'WordPress REST API Feed'}
+          </span>
+          <span className="text-slate-400">·</span>
+          <span className="text-slate-500 tabular-nums">
+            {totalPostsCount} {isHindi ? 'भर्तियां' : 'posts'}
+          </span>
+        </div>
+
+        <button
+          onClick={onRefresh}
+          disabled={isLoading || isRefreshing}
+          className="p-1 rounded-md text-blue-900 dark:text-blue-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition active:scale-95 shrink-0"
+          title="Refresh Feed"
+          aria-label="Refresh from API"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing || isLoading ? 'animate-spin' : ''}`} />
+        </button>
+      </div>
+
+      {/* 2. Error State Banner (if API error occurred) */}
+      {errorMessage && (
+        <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-xs text-red-800 dark:text-red-200 flex items-start justify-between gap-2">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+            <div>
+              <strong className="block font-semibold">
+                {isHindi ? 'API कनेक्शन त्रुटि' : 'WordPress API Connection Notice'}
+              </strong>
+              <p className="text-[11px] text-red-700 dark:text-red-300 mt-0.5">
+                {errorMessage}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onRetry}
+            className="px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold text-[11px] shrink-0 active:scale-95 transition"
+          >
+            {isHindi ? 'पुनः प्रयास करें' : 'Retry'}
+          </button>
+        </div>
+      )}
+
+      {/* 3. Quick Category Horizontal Filter Bar */}
       <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
         {/* Filter Sheet Trigger */}
         <button
@@ -84,7 +173,7 @@ export const LatestJobsSection: React.FC<LatestJobsSectionProps> = ({
         })}
       </div>
 
-      {/* 2. Active Filter Notice (if any) */}
+      {/* 4. Active Filters Tag Row */}
       {hasActiveFilters && (
         <div className="flex items-center justify-between px-3 py-2 bg-blue-50 dark:bg-blue-950/40 rounded-xl text-xs text-blue-900 dark:text-blue-300 border border-blue-200/60 dark:border-blue-900/60">
           <div className="flex items-center gap-1.5 truncate">
@@ -104,19 +193,8 @@ export const LatestJobsSection: React.FC<LatestJobsSectionProps> = ({
         </div>
       )}
 
-      {/* 3. Urgent Alert Banner */}
-      <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/60 text-xs">
-        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
-        <p className="text-amber-900 dark:text-amber-200 font-medium truncate">
-          <strong>{isHindi ? 'सूचना:' : 'Alert:'}</strong>{' '}
-          {isHindi
-            ? 'रेलवे एनटीपीसी एवं एसएससी सीजीएल आवेदन की अंतिम तिथि निकट है। तुरंत फॉर्म भरें।'
-            : 'RRB NTPC 11,558 Posts & SSC CGL 2026 application deadlines closing soon.'}
-        </p>
-      </div>
-
-      {/* 4. Skeleton Loading State */}
-      {isLoading && (
+      {/* 5. Skeleton Loading State */}
+      {isLoading && jobs.length === 0 && (
         <div className="space-y-3">
           {[1, 2, 3].map((n) => (
             <div
@@ -131,25 +209,53 @@ export const LatestJobsSection: React.FC<LatestJobsSectionProps> = ({
         </div>
       )}
 
-      {/* 5. Job Cards List */}
+      {/* 6. Jobs List with Embedded Native/Banner Ad */}
       {!isLoading && jobs.length > 0 && (
         <div className="space-y-3">
-          {jobs.map((job) => (
-            <JobCard
-              key={job.id}
-              job={job}
-              language={language}
-              isFavorite={favorites.includes(job.id)}
-              onToggleFavorite={onToggleFavorite}
-              onOpenDetails={onOpenDetails}
-              onShare={onShare}
-              onCopyLink={onCopyLink}
-            />
+          {jobs.map((job, idx) => (
+            <React.Fragment key={job.id}>
+              <JobCard
+                job={job}
+                language={language}
+                isFavorite={favorites.includes(job.id)}
+                onToggleFavorite={onToggleFavorite}
+                onOpenDetails={onOpenDetails}
+                onShare={onShare}
+                onCopyLink={onCopyLink}
+              />
+
+              {/* Native/Banner Ad inserted after 2nd item per app flow */}
+              {idx === 1 && <BannerAd language={language} />}
+            </React.Fragment>
           ))}
         </div>
       )}
 
-      {/* 6. Empty State */}
+      {/* 7. Pagination Controls ("Load More Vacancies" / Page status) */}
+      {jobs.length > 0 && totalPages > 1 && (
+        <div className="pt-2 flex flex-col items-center gap-2">
+          {currentPage < totalPages ? (
+            <button
+              onClick={onLoadMore}
+              disabled={isLoading}
+              className="w-full h-11 rounded-2xl bg-blue-900 hover:bg-blue-800 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-md shadow-blue-900/10 active:scale-95 transition disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+              <span>
+                {isHindi
+                  ? `और भर्तियां लोड करें (पेज ${currentPage} / ${totalPages})`
+                  : `Load More Vacancies (Page ${currentPage} of ${totalPages})`}
+              </span>
+            </button>
+          ) : (
+            <p className="text-center text-[11px] text-slate-400 py-2">
+              {isHindi ? 'सभी उपलब्ध सरकारी भर्तियां प्रदर्शित की गईं' : 'You have viewed all available government posts'}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* 8. Empty State */}
       {!isLoading && jobs.length === 0 && (
         <div className="py-12 px-4 text-center rounded-2xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 space-y-3">
           <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 mx-auto flex items-center justify-center text-slate-400">
